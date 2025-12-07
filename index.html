@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>EcoCart — Android-style Sustainable Shopping</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Minimal Android-like styling (Samsung-ish soft UI) */
+  :root{
+    --bg: #f2f4f8;
+    --surface: #ffffff;
+    --muted: #6c7580;
+    --primary: #1565c0; /* deep blue */
+    --accent: #00a86b;  /* soft green */
+    --danger: #ef4444;
+    --card-radius: 18px;
+    --shadow-1: 0 6px 18px rgba(12,18,25,0.06);
+    --shadow-2: 0 10px 30px rgba(12,18,25,0.08);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#eef3fb);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#07212a}
+  .app {
+    max-width:980px;
+    margin:0 auto;
+    padding:14px;
+    padding-bottom:100px;
+  }
+
+  /* Top App Bar */
+  .topbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px;
+    background:transparent;
+  }
+  .brand{
+    display:flex;align-items:center;gap:12px;
+  }
+  .logo {
+    width:52px;height:52px;border-radius:14px;background:linear-gradient(180deg,#fff,#f7fbff);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;box-shadow:var(--shadow-1);
+  }
+  .title-group{line-height:1}
+  h1{margin:0;font-size:18px}
+  .subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+
+  /* Main card grid */
+  .grid {
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap:14px;
+    margin-top:12px;
+  }
+  @media(max-width:980px){ .grid { grid-template-columns: 1fr } }
+
+  .card {
+    background:var(--surface);
+    border-radius:var(--card-radius);
+    padding:14px;
+    box-shadow:var(--shadow-1);
+    border: 1px solid rgba(10,15,25,0.03);
+  }
+
+  /* Product table (mobile friendly) */
+  .product-list { margin-top:8px; display:flex;flex-direction:column;gap:10px; }
+  .product {
+    display:flex;gap:12px;align-items:center;padding:10px;border-radius:14px;background:linear-gradient(180deg,#fff,#fbfdff);
+    border:1px solid rgba(10,15,25,0.03);
+  }
+  .product .emoji { font-size:26px; width:56px; height:56px; border-radius:12px; background:#f6f8fb; display:flex;align-items:center;justify-content:center; box-shadow:var(--shadow-1); }
+  .product .meta { flex:1 }
+  .product .meta strong { display:block; font-size:15px }
+  .product .meta .small { color:var(--muted); font-size:13px; margin-top:4px }
+  .product .price { font-weight:700 }
+  .product .eco { width:140px; text-align:right }
+  .product button { padding:8px 10px; border-radius:10px; border:0; background:#fff; color:var(--primary); font-weight:700; cursor:pointer; box-shadow:0 4px 10px rgba(12,18,25,0.03) }
+
+  /* detail & actions */
+  .detail .big-emoji { font-size:48px }
+  .detail .stats { display:flex;gap:8px;margin-top:8px;flex-wrap:wrap }
+  .stat { background:#f4fbf9;padding:8px;border-radius:10px;font-size:13px;color:var(--muted);border:1px solid rgba(10,15,25,0.02) }
+
+  .recommendations { margin-top:12px }
+  .fav { padding:10px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(10,15,25,0.03);margin-bottom:8px }
+
+  /* summary small bars */
+  .mini { display:flex;gap:8px;align-items:center;margin-top:8px }
+  .mini .label { font-size:13px;color:var(--muted); min-width:90px }
+  .mini .meter { flex:1;background:#eef6fa;border-radius:10px;height:10px;overflow:hidden }
+  .meter > span { display:block;height:100%;background:var(--accent);width:20% }
+
+  /* floating action button */
+  .fab {
+    position:fixed; right:18px; bottom:84px;
+    width:64px;height:64px;border-radius:32px;background:linear-gradient(135deg,var(--accent),#00b77a);
+    display:flex;align-items:center;justify-content:center;color:white;font-size:26px;box-shadow:var(--shadow-2);border:0;
+  }
+
+  /* bottom navigation (Android-style) */
+  .bottom-nav {
+    position:fixed; left:0; right:0; bottom:0; height:64px; display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.95));
+    border-top:1px solid rgba(10,15,25,0.04); backdrop-filter: blur(6px);
+  }
+  .nav-inner { max-width:980px; display:flex;align-items:center;justify-content:space-around;width:100%;padding:8px; }
+  .nav-btn{ display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);font-size:12px }
+  .nav-btn.active{ color:var(--primary) }
+
+  /* utility */
+  .row { display:flex;gap:8px;align-items:center }
+  .small { font-size:13px; color:var(--muted) }
+  .ghost { background:transparent; border:1px solid rgba(10,15,25,0.06); padding:8px 10px; border-radius:10px; cursor:pointer }
+</style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="EcoCart Android-style app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">♻️</div>
+        <div class="title-group">
+          <h1>EcoCart</h1>
+          <div class="subtitle">Sustainable shopping — Kenya</div>
+        </div>
+      </div>
+      <div class="row">
+        <select id="categoryFilter" class="ghost" aria-label="Filter categories">
+          <option value="all">All</option>
+        </select>
+        <select id="sortBy" class="ghost" aria-label="Sort by">
+          <option value="price-asc">Price ↑</option>
+          <option value="price-desc">Price ↓</option>
+          <option value="eco-desc">Eco ↓ (greener)</option>
+          <option value="eco-asc">Eco ↑</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: product list -->
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><strong>Products</strong><div class="small">Compare price and eco-impact</div></div>
+          <div class="small" id="itemCount">0 items</div>
+        </div>
+
+        <div id="productList" class="product-list" style="margin-top:12px">
+          <!-- products injected here -->
+        </div>
+
+        <div style="margin-top:12px" class="mini">
+          <div class="label">Avg price</div>
+          <div class="meter"><span id="avgPriceBar" style="width:10%"></span></div>
+          <div class="small" id="avgPriceText">KES 0</div>
+        </div>
+
+        <div class="mini">
+          <div class="label">Avg eco-score</div>
+          <div class="meter"><span id="avgEcoBar" style="width:10%"></span></div>
+          <div class="small" id="avgEcoText">0 / 100</div>
+        </div>
+      </section>
+
+      <!-- RIGHT: detail & favorites -->
+      <aside class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><strong>Selected</strong><div class="small">Details & actions</div></div>
+          <div class="small">Saved locally</div>
+        </div>
+
+        <div id="detail" style="margin-top:12px">
+          <div class="small">No product selected</div>
+        </div>
+
+        <div style="margin-top:12px" class="row">
+          <button id="recommendBtn" class="ghost">Recommend</button>
+          <button id="saveFav" class="ghost">Save</button>
+          <button id="exportBtn" class="ghost">Export CSV</button>
+        </div>
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(10,15,25,0.03)">
+
+        <strong>Favorites</strong>
+        <div id="favorites" style="margin-top:10px"></div>
+
+        <div class="small" style="margin-top:12px">Tip: Use EcoCart on your phone to pick greener and cheaper brands while shopping.</div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <button class="fab" id="fab" title="Add sample product">＋</button>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <div class="nav-btn active" data-tab="browse" onclick="switchTab('browse')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Browse
+      </div>
+      <div class="nav-btn" data-tab="favorites" onclick="switchTab('favorites')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M12 21l-1-7L4 9l7-1 1-7 1 7 7 1-7 5 1 7z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Favorites
+      </div>
+      <div class="nav-btn" data-tab="insights" onclick="switchTab('insights')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M3 12h3M8 6h3M13 3v18M18 10h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Insights
+      </div>
+    </div>
+  </nav>
+
+<script>
+/* Android-style EcoCart app logic (same dataset + features) */
+
+/* Dataset */
+const PRODUCTS = [
+  {id:'rice_a', category:'Grains', name:'Long Grain Rice 2kg', brand:'Mkulima', price:340, packagingImpact:4, plasticScore:3, carbon:2.4, recyclability:0.6, emoji:'🌾'},
+  {id:'rice_b', category:'Grains', name:'Parboiled Rice 2kg', brand:'FarmChoice', price:320, packagingImpact:6, plasticScore:5, carbon:2.7, recyclability:0.4, emoji:'🌾'},
+  {id:'oil_a', category:'Cooking Oil', name:'Sunflower Oil 1L', brand:'Nourish', price:210, packagingImpact:5, plasticScore:6, carbon:3.0, recyclability:0.3, emoji:'🛢️'},
+  {id:'oil_b', category:'Cooking Oil', name:'Refined Oil 1L', brand:'ValueCook', price:180, packagingImpact:7, plasticScore:8, carbon:3.6, recyclability:0.2, emoji:'🛢️'},
+  {id:'flour_a', category:'Staples', name:'Maize Flour 1kg', brand:'Uji', price:95, packagingImpact:3, plasticScore:2, carbon:1.2, recyclability:0.7, emoji:'🌽'},
+  {id:'flour_b', category:'Staples', name:'Maize Flour 1kg', brand:'Simba', price:85, packagingImpact:5, plasticScore:4, carbon:1.4, recyclability:0.5, emoji:'🌽'},
+  {id:'soap_a', category:'Household', name:'Laundry Soap 500g', brand:'CleanWave', price:120, packagingImpact:2, plasticScore:1, carbon:0.9, recyclability:0.8, emoji:'🧼'},
+  {id:'soap_b', category:'Household', name:'Laundry Powder 500g', brand:'QuickWash', price:110, packagingImpact:6, plasticScore:6, carbon:1.5, recyclability:0.2, emoji:'🧴'},
+  {id:'bread_a', category:'Bakery', name:'White Bread', brand:'BakerY', price:60, packagingImpact:2, plasticScore:1, carbon:0.8, recyclability:0.9, emoji:'🍞'},
+  {id:'bread_b', category:'Bakery', name:'Wholegrain Bread', brand:'HealthyLoaf', price:75, packagingImpact:3, plasticScore:2, carbon:1.0, recyclability:0.8, emoji:'🍞'},
+  {id:'milk_a', category:'Dairy', name:'UHT Milk 1L', brand:'FreshPack', price:150, packagingImpact:4, plasticScore:3, carbon:2.1, recyclability:0.5, emoji:'🥛'},
+  {id:'milk_b', category:'Dairy', name:'Fresh Milk 1L', brand:'FarmBest', price:160, packagingImpact:6, plasticScore:4, carbon:2.5, recyclability:0.4, emoji:'🥛'},
+  {id:'eggs', category:'Protein', name:'Eggs (12)', brand:'PoultryCo', price:240, packagingImpact:3, plasticScore:1, carbon:1.8, recyclability:0.6, emoji:'🥚'}
+];
+
+let products = PRODUCTS.map(p => ({...p}));
+let favorites = JSON.parse(localStorage.getItem('ecocart_favs') || '[]');
+let selectedId = null;
+
+/* calc eco score */
+function calcEcoScore(p){
+  const maxImpact = 10;
+  const maxCarbon = 5;
+  const packagingFactor = 1 - (p.packagingImpact / maxImpact);
+  const plasticFactor = 1 - (p.plasticScore / maxImpact);
+  const carbonFactor = 1 - (Math.min(p.carbon, maxCarbon) / maxCarbon);
+  const recycleFactor = p.recyclability;
+  const score = (packagingFactor * 0.25 + plasticFactor * 0.30 + carbonFactor * 0.30 + recycleFactor * 0.15) * 100;
+  return Math.round(score);
+}
+
+products.forEach(p => { p.ecoScore = calcEcoScore(p); });
+
+/* DOM refs */
+const productList = document.getElementById('productList');
+const categoryFilter = document.getElementById('categoryFilter');
+const sortBy = document.getElementById('sortBy');
+const itemCount = document.getElementById('itemCount');
+const avgPriceBar = document.getElementById('avgPriceBar');
+const avgEcoBar = document.getElementById('avgEcoBar');
+const avgPriceText = document.getElementById('avgPriceText');
+const avgEcoText = document.getElementById('avgEcoText');
+const detail = document.getElementById('detail');
+const favoritesEl = document.getElementById('favorites');
+const recommendBtn = document.getElementById('recommendBtn');
+const saveFavBtn = document.getElementById('saveFav');
+const exportBtn = document.getElementById('exportBtn');
+const fab = document.getElementById('fab');
+
+function populateCategories(){
+  const cats = Array.from(new Set(products.map(p=>p.category)));
+  categoryFilter.innerHTML = '<option value="all">All</option>';
+  cats.forEach(c => {
+    const opt = document.createElement('option'); opt.value = c; opt.textContent = c;
+    categoryFilter.appendChild(opt);
+  });
+}
+
+function renderProducts(){
+  const cat = categoryFilter.value || 'all';
+  const sort = sortBy.value || 'price-asc';
+  let list = products.filter(p => cat === 'all' ? true : p.category === cat);
+
+  if(sort === 'price-asc') list.sort((a,b)=> a.price - b.price);
+  if(sort === 'price-desc') list.sort((a,b)=> b.price - a.price);
+  if(sort === 'eco-desc') list.sort((a,b)=> b.ecoScore - a.ecoScore);
+  if(sort === 'eco-asc') list.sort((a,b)=> a.ecoScore - b.ecoScore);
+
+  productList.innerHTML = '';
+  list.forEach(p => {
+    const node = document.createElement('div'); node.className = 'product';
+    node.innerHTML = `
+      <div class="emoji">${p.emoji}</div>
+      <div class="meta">
+        <strong>${p.name}</strong>
+        <div class="small">${p.brand} • ${p.category}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="price">KES ${p.price.toLocaleString()}</div>
+        <div class="eco" style="margin-top:6px">
+          <div style="width:140px">
+            <div style="height:8px;background:#eef6fa;border-radius:8px;overflow:hidden">
+              <div style="height:100%;width:${p.ecoScore}%;background:${p.ecoScore>=70? 'var(--accent)':'#f59e0b'}"></div>
+            </div>
+          </div>
+          <div class="small" style="margin-top:6px">${p.ecoScore}/100</div>
+        </div>
+        <div style="margin-top:8px">
+          <button onclick="selectProduct('${p.id}')">Select</button>
+        </div>
+      </div>
+    `;
+    productList.appendChild(node);
+  });
+
+  itemCount.textContent = `${list.length} items`;
+  renderInsights(list);
+}
+
+function renderInsights(list){
+  if(list.length === 0){
+    avgPriceText.textContent = 'KES 0';
+    avgEcoText.textContent = '0 / 100';
+    avgPriceBar.style.width = '0%';
+    avgEcoBar.style.width = '0%';
+    return;
+  }
+  const avgPrice = Math.round(list.reduce((s,p)=>s+p.price,0)/list.length);
+  const avgEco = Math.round(list.reduce((s,p)=>s+p.ecoScore,0)/list.length);
+  avgPriceText.textContent = 'KES ' + avgPrice.toLocaleString();
+  avgEcoText.textContent = avgEco + ' / 100';
+  const maxPrice = Math.max(...products.map(x=>x.price));
+  avgPriceBar.style.width = Math.min(100, Math.round((avgPrice/maxPrice)*100)) + '%';
+  avgEcoBar.style.width = Math.min(100, Math.round(avgEco)) + '%';
+}
+
+function selectProduct(id){
+  selectedId = id;
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  detail.innerHTML = `
+    <div class="detail">
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="big-emoji">${p.emoji}</div>
+        <div>
+          <div style="font-weight:700">${p.name}</div>
+          <div class="small">${p.brand} • ${p.category}</div>
+          <div style="margin-top:8px;font-weight:700">KES ${p.price.toLocaleString()}</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">Packaging: ${p.packagingImpact}/10</div>
+        <div class="stat">Plastic: ${p.plasticScore}/10</div>
+        <div class="stat">Carbon: ${p.carbon} kg</div>
+        <div class="stat">Recyclability: ${(p.recyclability*100).toFixed(0)}%</div>
+        <div class="stat">Eco score: ${p.ecoScore}/100</div>
+      </div>
+      <div class="recommendations"></div>
+    </div>
+  `;
+  saveFavBtn.textContent = favorites.includes(p.id) ? 'Saved' : 'Save';
+}
+
+/* recommendations: find same category items that are greener and cheaper if possible */
+function recommend(){
+  if(!selectedId) return alert('Select a product first');
+  const p = products.find(x=>x.id===selectedId);
+  const alts = products.filter(x => x.category === p.category && x.id !== p.id)
+    .map(x => {
+      const ecoDiff = x.ecoScore - p.ecoScore;
+      const priceDiff = p.price - x.price;
+      const score = ecoDiff * 0.6 + priceDiff * 0.4;
+      return {...x, recScore: score};
+    }).sort((a,b)=> b.recScore - a.recScore);
+
+  if(alts.length === 0) return alert('No alternatives found');
+  let message = 'Top alternatives:\\n\\n';
+  alts.slice(0,4).forEach(a => {
+    message += `${a.emoji} ${a.name} (${a.brand}) — KES ${a.price} — Eco ${a.ecoScore}/100\\n`;
+  });
+  alert(message);
+}
+
+/* favorites */
+function renderFavorites(){
+  favoritesEl.innerHTML = '';
+  if(favorites.length === 0){ favoritesEl.innerHTML = '<div class="small">No favorites yet</div>'; return; }
+  favorites.forEach(id => {
+    const p = products.find(x=>x.id===id);
+    if(!p) return;
+    const div = document.createElement('div'); div.className = 'fav';
+    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${p.name}</strong><div class="small">${p.brand}</div></div><div style="text-align:right"><div style="font-weight:700">KES ${p.price}</div><div class="small">${p.ecoScore}/100</div></div></div>`;
+    favoritesEl.appendChild(div);
+  });
+}
+
+function saveFavorite(){
+  if(!selectedId) return alert('Select a product first');
+  if(!favorites.includes(selectedId)) favorites.push(selectedId);
+  localStorage.setItem('ecocart_favs', JSON.stringify(favorites));
+  renderFavorites();
+  saveFavBtn.textContent = 'Saved';
+}
+
+function clearFavorites(){
+  if(!confirm('Clear all favorites?')) return;
+  favorites = [];
+  localStorage.removeItem('ecocart_favs');
+  renderFavorites();
+}
+
+/* export CSV */
+function exportCSV(){
+  const rows = products.map(p => ({name:p.name,brand:p.brand,category:p.category,price:p.price,ecoScore:p.ecoScore}));
+  let csv = 'name,brand,category,price,ecoScore\\n';
+  rows.forEach(r => {
+    csv += `"${r.name.replace(/"/g,'""')}","${r.brand}","${r.category}",${r.price},${r.ecoScore}\\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'ecocart.csv'; a.click(); URL.revokeObjectURL(url);
+}
+
+/* bottom nav */
+function switchTab(tab){
+  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+  document.querySelector(`.nav-btn[data-tab="${tab}"]`)?.classList.add('active');
+  // simple tab behavior: scroll to section or change view
+  if(tab === 'favorites') {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  } else if(tab === 'insights') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    window.scrollTo({ top: 120, behavior: 'smooth' });
+  }
+}
+
+/* FAB: add sample product (quick demo) */
+fab.addEventListener('click', ()=> {
+  // create a demo product and add to list
+  const demo = { id: 'demo_' + Date.now(), category: 'Misc', name: 'Reusable Bag', brand: 'EcoPack', price: 50, packagingImpact:1, plasticScore:0, carbon:0.2, recyclability:0.95, emoji:'🛍️' };
+  demo.ecoScore = calcEcoScore(demo);
+  products.unshift(demo);
+  populateCategories();
+  renderProducts();
+  alert('Sample item added (Reusable Bag) — try selecting it.');
+});
+
+/* wire UI */
+document.getElementById('recommendBtn').addEventListener('click', recommend);
+document.getElementById('saveFav').addEventListener('click', saveFavorite);
+document.getElementById('exportBtn').addEventListener('click', exportCSV);
+document.getElementById('categoryFilter').addEventListener('change', renderProducts);
+document.getElementById('sortBy').addEventListener('change', renderProducts);
+
+/* init */
+function init(){
+  populateCategories();
+  renderProducts();
+  renderFavorites();
+  // select first product
+  if(products.length) selectProduct(products[0].id);
+}
+init();
+
+/* expose for debug */
+window.selectProduct = selectProduct;
+window.clearFavorites = clearFavorites;
+window.switchTab = switchTab;
+</script>
+</body>
+</html>

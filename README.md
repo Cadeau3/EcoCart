@@ -149,5 +149,6 @@ Future idea: barcode scanning system
 
 🙌 Created By
 
-Lynette Ochieng
+Lynette Ochieng, 
+
 A student project demonstrating practical computer science, sustainable technology, and mobile UI design skills.
